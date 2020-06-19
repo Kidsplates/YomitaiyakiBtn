@@ -84,7 +84,6 @@ export default {
   .control {
     position: relative;
     z-index: 100;
-    margin-left: 100px;
     display: flex;
     justify-content: center;
     align-items: center;
