@@ -14,10 +14,12 @@ export default {
 <style lang="scss">
 body {
   background: #00ff00;
-  text-align: center;
 }
 img {
   vertical-align: top;
+}
+.center {
+  text-align: center;
 }
 #app {
 }

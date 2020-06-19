@@ -1,16 +1,19 @@
 <template>
   <div id="control">
-    <button class="btn" @click="remotePushBtn">リモートへえ</button>
-
-
-    <div>peerid: {{ myPeerId }}</div>
-    <form @submit.prevent="connectPeer">
-        <input type="text" v-model="$store.state.connectPeerId"/>
-        <button type="submit">connectPeer</button>
-    </form>
-    <pre>{{ $store.state }}</pre>
-
-    <router-link to="/hee">へえボタン</router-link>
+    <div class="control">
+      <button class="btn" @click="remoteAddCount">へぇ</button>
+      <button class="btn" @click="remoteResetCount">リセット</button>
+      <div class="remote">
+        <div class="center">スマホを<br>リモコンにする</div>
+        <br>
+        <div class="center">
+          <div class="status"><span v-if="success">成功</span><span v-if="!success">未接続</span></div>
+          <button class="remote-btn" @click="connectPeer">接続する</button>
+          <a :href="urlControlPage" target="_blank">{{ urlControlPage }}</a>
+          <img id="qrControlPage" src="" alt="">
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -19,6 +22,7 @@ export default {
   name: 'Hee',
   data() {
     return {
+      success: false,
     }
   },
   computed: {
@@ -40,43 +44,82 @@ export default {
   },
   methods: {
     connectPeer() {
-      const id = this.connectPeerId
+      const id = this.$route.params.id
       const conn = this.$peer.connect(id)
-      const addCount = this.addCount
-
-      console.log(this.$peer);
+      const successConnection = this.successConnection
       conn.on('open', function() {
-        console.log("connect")
-      })
-      this.$peer.on('connection', function(conn) {
-        conn.on('data', function(data){
-          if(data == "push") {
-            console.log("remote hee")
-            addCount()
-          }
-        });
+        conn.send('connect');
+        successConnection()
       })
     },
-    remotePushBtn() {
-      const id = this.connectPeerId
-      const conn = this.$peer.connect(id)
-      conn.on('open', function() {
-        conn.send('push');
-      })
+    successConnection() {
+      this.peers()
+      this.success = true
     },
-    addCount() {
-      if (this.$store.state.count < this.$store.state.max) {
-        this.$store.state.count += 1
+    peers() {
+      for (let [key] of Object.entries(this.$peer.connections)) {
+        this.$store.state.connectPeerId.push(key);
       }
     },
-    resetCount() {
-      this.$store.state.count = 0
-    }
+    remoteAddCount() {
+      const id = this.connectPeerId[0]
+      const conn = this.$peer.connect(id)
+      conn.on('open', function() {
+        conn.send('add');
+      })
+    },
+    remoteResetCount() {
+      const id = this.connectPeerId[0]
+      const conn = this.$peer.connect(id)
+      conn.on('open', function() {
+        conn.send('reset');
+      })
+    },
   },
 }
 </script>
 
 <style lang="scss">
 #control {
+  .control {
+    position: relative;
+    z-index: 100;
+    margin-left: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    .btn {
+      margin-top: 10px;
+      width: 200px;
+      height: 100px;
+      font-size: 2em;
+      background: #ffffff;
+      box-shadow:2px 2px 9px -2px #969696;
+      border-radius:6px;
+      border:1px solid #cccccc;
+      color: inherit;
+      text-decoration: none;
+    }
+    .remote {
+      margin-top: 10px;
+      padding: 10px;
+      width: 200px;
+      box-sizing: border-box;
+      background: #ff9bcd;
+      box-shadow:2px 2px 9px -2px #969696;
+      border-radius:6px;
+      border:1px solid #cccccc;
+      color: inherit;
+      text-decoration: none;
+      word-wrap: break-word;
+      .status {
+        background: #ffffff;
+        border-radius:6px;
+        border:1px solid #cccccc;
+        padding: 10px;
+      }
+    }
+  }
 }
 </style>

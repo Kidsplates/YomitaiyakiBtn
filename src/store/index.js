@@ -8,7 +8,7 @@ export default new Vuex.Store({
     count: 0,
     max: 20,
     myPeerId: '',
-    connectPeerId: ''
+    connectPeerId: []
   },
   mutations: {
   },
