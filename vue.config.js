@@ -4,13 +4,13 @@ module.exports = {
   pages: {
     index: {
       entry: 'src/main.js', // 必須パラメータ
-      title: 'へぇボタン',
+      title: 'よみたい焼き',
     }
   },
   pluginOptions: {
     electronBuilder: {
       builderOptions: {
-        productName: 'へぇボタン',
+        productName: 'よみたい焼き リモコン式',
         copyright: 'Copyright © 2020 Kidsplates.'
       }
     }

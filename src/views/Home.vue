@@ -1,29 +1,20 @@
 <template>
   <div id="hee">
     <div class="main">
-      <div class="panel">
-        <img src="@/assets/bar-bg.png" alt="">
-        <div id="bar" class="bar">
-        <img src="@/assets/bar.png" alt="">
-        </div>
-      </div>
-      <div class="count">
-        <img src="@/assets/count.png" alt="">
-        <span>{{ this.point }}</span>
-      </div>
+      <div class="canvas"></div>
       <audio id="audio" preload="metadata" controls>
         <source src="@/assets/hee.mp3" type="audio/mp3">
       </audio>
     </div>
 
-    <div class="control">
-      <button class="btn" @click="addCount">へぇ</button>
+    <div class="control" v-if="showMenu">
+      [ESC]で開閉
+      <button class="btn" @click="taiyaki100">よみたい焼き</button>
       <button class="btn" @click="resetCount">リセット</button>
       <div class="remote">
-        <div class="center">スマホを<br>リモコンにする</div>
-        <br>
+        <div class="center">リモート<br>コントロールにする</div>
         <div class="center">
-          <button class="remote-btn" @click="generateControlUrl">リモコンページを生成する</button>
+          <button class="remote-btn" @click="generateControlUrl">リモコンページを<br>生成する</button>
           <a :href="urlControlPage" target="_blank">{{ urlControlPage }}</a>
           <img id="qrControlPage" src="" alt="">
         </div>
@@ -34,34 +25,31 @@
 
 <script>
 import QRCode from 'qrcode'
+import { Engine, Render, Runner, World, Bodies } from 'matter-js'
 
 export default {
   name: 'Home',
   data() {
     return {
       point: 0,
-      urlControlPage: ''
+      urlControlPage: '',
+      canvas: {
+        width: 1280,
+        height: 720,
+      },
+      mattetr: {
+        engine: null,
+        world: null,
+        render: null,
+        runner: null
+      },
+      showMenu: true,
+      isAnimation: false,
     }
   },
   watch: {
-    'count': function(newVal, oldVal) {
-      this.point = (this.$store.state.count < this.$store.state.max)? this.$store.state.count: this.$store.state.max
-
-      let percent = (this.point/this.max) * 100
-      document.getElementById('bar').style.height = percent + "%"
-
-      if ( newVal > oldVal ) {
-        this.playAudio()
-      }
-    }
   },
   computed: {
-    count() {
-      return this.$store.state.count
-    },
-    max() {
-      return this.$store.state.max
-    },
     myPeerId() {
       return this.$store.state.myPeerId
     },
@@ -70,6 +58,8 @@ export default {
     },
   },
   mounted() {
+    this.initWorld()
+    this.initEventListener()
   },
   methods: {
     generateControlUrl() {
@@ -83,7 +73,7 @@ export default {
     },
     receivePeer() {
       const peers = this.peers
-      const addCount = this.addCount
+      const taiyaki100 = this.taiyaki100
       const resetCount = this.resetCount
 
       this.$peer.on('connection', function(conn) {
@@ -91,8 +81,8 @@ export default {
           if(data == "connect") {
             peers()
           }
-          if(data == "add") {
-            addCount()
+          if(data == "taiyaki100") {
+            taiyaki100()
           }
           if(data == "reset") {
             resetCount()
@@ -105,11 +95,123 @@ export default {
         this.$store.state.connectPeerId.push(key);
       }
     },
-    addCount() {
-      this.$store.state.count += 1
+    taiyaki100() {
+      if(!this.isAnimation) {
+        this.playAudio()
+        this.dropTaiyakiPercentage(1)
+      }
+    },
+    dropTaiyakiPercentage(percentage) {
+      var len = Math.floor(150*percentage)
+      var n = 0
+      var during = 1000
+      var addTaiyaki = this.addTaiyaki
+      var setIsAnimation = this.setIsAnimation
+      var getIsAnimation = this.getIsAnimation
+      this.setIsAnimation(true)
+      var interval = setInterval(function() {
+        if(!getIsAnimation()) {
+          clearInterval(interval)
+          return
+        }
+        console.log(n)
+        addTaiyaki()
+        n++
+        if(n == len) {
+          clearInterval(interval)
+          setIsAnimation(false)
+        }
+      }, during/len)
+    },
+    getIsAnimation() {
+      return this.isAnimation
+    },
+    setIsAnimation(val) {
+      this.isAnimation = val
     },
     resetCount() {
-      this.$store.state.count = 0
+      this.setIsAnimation(false)
+      this.clearWorld()
+    },
+    initEventListener() {
+      document.addEventListener("keydown", event => {
+        // ESCAPE
+        if (event.keyCode == 27) {
+            this.showMenu = !this.showMenu
+        }
+      });
+    },
+    initWorld() {
+      // create engine
+      this.mattetr.engine = Engine.create()  //物理演算エンジンを生成？
+      this.mattetr.world = this.mattetr.engine.world  //重力の存在する仮想世界の生成…？
+
+      // create renderer
+      this.mattetr.render = Render.create({  //レンダリングの設定？
+        element: document.querySelector('.canvas'),
+        engine: this.mattetr.engine,
+        options: {
+          width: this.canvas.width,  //ステージの横幅
+          height: this.canvas.height,  //ステージの高さ
+          background: '#00ff00',  //ステージの背景色
+          wireframes: false  //ワイヤーフレームモードをオフ
+        }
+      });
+
+      Render.run(this.mattetr.render);  //ステージを配置させる記述？
+
+      // create runner
+      this.mattetr.runner = Runner.create();
+      Runner.run(this.mattetr.runner, this.mattetr.engine);  //物理エンジンを実行？
+
+      this.defaultObject()
+    },
+    clearWorld() {
+      World.clear(this.mattetr.world, true)
+      this.defaultObject()
+    },
+    defaultObject() {
+      //床
+      var yuka = Bodies.rectangle(this.canvas.width/2, this.canvas.height+15, this.canvas.width, 30, {
+        isStatic: true
+      });
+      var kabeRight = Bodies.rectangle(this.canvas.width+15, this.canvas.height/2, 30, this.canvas.height, {
+        isStatic: true
+      });
+      var kabeLeft = Bodies.rectangle(-15, this.canvas.height/2, 30, this.canvas.height, {
+        isStatic: true
+      });
+      World.add(this.mattetr.world, [  //作成した図形をステージに追加して描画する？
+        yuka,
+        kabeRight,
+        kabeLeft
+      ]);
+    },
+    addTaiyaki() {
+      var range = getRandomInt(-100, 100)
+
+      var taiyaki = Bodies.circle(this.canvas.width/2+range, -100, 40, {
+        density: 10, // 密度
+        frictionAir: 0, // 空気抵抗
+        restitution: 0.5, // 弾力性
+        friction: 1, // 本体の摩擦
+        render: {
+          lineWidth: 5,  //線の太さ
+          sprite: { //スプライトの設定
+            texture: './img/character_taiyaki.png' //テクスチャ画像を指定
+          }
+        }
+      });
+
+      World.add(this.mattetr.world, [  //作成した図形をステージに追加して描画する？
+          taiyaki
+      ]);
+
+      function getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min)) + min; //The maximum is exclusive and the minimum is inclusive
+      }
     },
     playAudio() {
       const audio = document.getElementById("audio").cloneNode(true)
@@ -120,46 +222,27 @@ export default {
 </script>
 
 <style lang="scss">
-#hee {
-  display: flex;
-  justify-content: center;
+body {
+  background: #efefef;
+}
 
+#hee {
   .main {
+    padding: 30px 0;
     text-align: center;
-    .panel {
-      position: relative;
-      margin: 0 auto 1em;
-    }
-    .bar {
-      position: absolute;
-      bottom: 10px;
-      left: 0;
-      width: 100%;
-      overflow: hidden;
-      img {
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-      }
-    }
-    .count {
-      position: relative;
-      margin: 0 auto;
-      span {
-        position: absolute;
-        top: 65%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 200px;
-      }
+    .canvas {
+      line-height: 0;
     }
   }
 
   .control {
-    position: relative;
+    position: fixed;
+    top: 0;
+    right: 0;
     z-index: 100;
-    margin-left: 100px;
+    padding: 30px;
+    background: #efefef;
+
     display: flex;
     justify-content: center;
     align-items: center;
