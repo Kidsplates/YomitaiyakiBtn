@@ -1,9 +1,14 @@
 <template>
   <div id="hee">
     <div class="main">
+      <div class="sticker">
+        <div v-if="sticker.taiyaki" class="animate__animated animate__zoomIn">
+          <img src="@/assets/character_taiyaki.png" alt="">
+        </div>
+      </div>
       <div class="canvas"></div>
       <audio id="audio" preload="metadata" controls>
-        <source src="@/assets/hee.mp3" type="audio/mp3">
+        <source src="@/assets/taiyaki.mp3" type="audio/mp3">
       </audio>
     </div>
 
@@ -19,6 +24,7 @@
           <img id="qrControlPage" src="" alt="">
         </div>
       </div>
+      <button @click="reload">リロード</button>
     </div>
   </div>
 </template>
@@ -45,6 +51,9 @@ export default {
       },
       showMenu: true,
       isAnimation: false,
+      sticker: {
+        taiyaki: false,
+      }
     }
   },
   watch: {
@@ -62,6 +71,9 @@ export default {
     this.initEventListener()
   },
   methods: {
+    reload(){
+      location.reload()
+    },
     generateControlUrl() {
       this.$store.state.myPeerId = this.$peer.id
       const url = location.href+'control/'+this.myPeerId
@@ -99,6 +111,11 @@ export default {
       if(!this.isAnimation) {
         this.playAudio()
         this.dropTaiyakiPercentage(1)
+
+        var showSticker = this.showSticker
+        setTimeout(function(){
+          showSticker('taiyaki')
+        }, 3000)
       }
     },
     dropTaiyakiPercentage(percentage) {
@@ -123,6 +140,9 @@ export default {
         }
       }, during/len)
     },
+    showSticker(sticker) {
+      this.sticker[sticker] = true
+    },
     getIsAnimation() {
       return this.isAnimation
     },
@@ -132,6 +152,7 @@ export default {
     resetCount() {
       this.setIsAnimation(false)
       this.clearWorld()
+      this.sticker.taiyaki = false
     },
     initEventListener() {
       document.addEventListener("keydown", event => {
@@ -228,10 +249,23 @@ body {
 
 #hee {
   .main {
-    padding: 30px 0;
     text-align: center;
+    .sticker {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+    }
     .canvas {
+      position: fixed;
+      width: 100%;
+      height: 100%;
       line-height: 0;
+      canvas {
+        width: 100%;
+        height: 100%;
+      }
     }
   }
 
