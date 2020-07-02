@@ -24,6 +24,7 @@
           <img id="qrControlPage" src="" alt="">
         </div>
       </div>
+      <br>
       <button @click="reload">リロード</button>
     </div>
   </div>
@@ -73,6 +74,14 @@ export default {
   methods: {
     reload(){
       location.reload()
+    },
+    initEventListener() {
+      document.addEventListener("keydown", event => {
+        // ESCAPE
+        if (event.keyCode == 27) {
+            this.showMenu = !this.showMenu
+        }
+      });
     },
     generateControlUrl() {
       this.$store.state.myPeerId = this.$peer.id
@@ -153,14 +162,6 @@ export default {
       this.setIsAnimation(false)
       this.clearWorld()
       this.sticker.taiyaki = false
-    },
-    initEventListener() {
-      document.addEventListener("keydown", event => {
-        // ESCAPE
-        if (event.keyCode == 27) {
-            this.showMenu = !this.showMenu
-        }
-      });
     },
     initWorld() {
       // create engine
