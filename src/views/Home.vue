@@ -71,8 +71,8 @@ export default {
       point: 0,
       urlControlPage: '',
       canvas: {
-        width: 1920,
-        height: 1080,
+        width: 1280,
+        height: 720,
       },
       mattetr: {
         engine: null,
