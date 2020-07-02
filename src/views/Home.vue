@@ -45,7 +45,7 @@
           </div>
         </div>
       </div>
-      <button class="btn" @click="reset">リセット</button>
+      <button class="reset btn" @click="reset">リセット</button>
       <div class="remote">
         <div class="center">リモート<br>コントロールにする</div>
         <div class="center">
@@ -333,7 +333,7 @@ body {
     flex-direction: column;
     .btn {
       margin: 10px;
-      width: 200px;
+      width: 100px;
       font-size: 2em;
       background: #ffffff;
       box-shadow:2px 2px 9px -2px #969696;
@@ -341,6 +341,9 @@ body {
       border:1px solid #cccccc;
       color: inherit;
       text-decoration: none;
+      &.reset {
+        width: 200px;
+      }
     }
     .remote {
       margin-top: 10px;
