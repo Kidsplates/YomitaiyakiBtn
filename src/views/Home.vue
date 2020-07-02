@@ -56,6 +56,7 @@
       </div>
       <br>
       <button @click="reload">リロード</button>
+      ※リロードするとリモコンページを再生成します
     </div>
   </div>
 </template>
