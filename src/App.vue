@@ -12,7 +12,7 @@ export default {
 </script>
 
 <style lang="scss">
-@import 'bootstrap/dist/css/bootstrap-reboot';
+@import 'bootstrap/dist/css/bootstrap';
 
 img {
   vertical-align: top;

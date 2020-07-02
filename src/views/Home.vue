@@ -3,7 +3,10 @@
     <div class="main">
       <div class="sticker">
         <div v-if="sticker.taiyaki" class="animate__animated animate__zoomIn">
-          <img src="@/assets/character_taiyaki.png" alt="">
+          <img src="@/assets/sticker/taiyaki.png" alt="">
+        </div>
+        <div v-if="sticker.omanju" class="animate__animated animate__zoomIn">
+          <img src="@/assets/sticker/omanju.png" alt="">
         </div>
       </div>
       <div class="canvas"></div>
@@ -14,8 +17,35 @@
 
     <div class="control" v-if="showMenu">
       [ESC]で開閉
-      <button class="btn" @click="taiyaki100">よみたい焼き</button>
-      <button class="btn" @click="resetCount">リセット</button>
+      <div class="row mt-3">
+        <div class="col">
+          <div class="border border-dark rounded py-2">
+            <div class="text-center">
+              <img width="50px" src="@/assets/sticker/taiyaki.png" alt="">
+            </div>
+            <div class="d-flex flex-column">
+              <button class="btn" @click="startSticker('taiyaki', 100)">100</button>
+              <button class="btn" @click="startSticker('taiyaki', 75)">75</button>
+              <button class="btn" @click="startSticker('taiyaki', 50)">50</button>
+              <button class="btn" @click="startSticker('taiyaki', 25)">25</button>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="border border-dark rounded py-2">
+            <div class="text-center">
+              <img width="50px" src="@/assets/sticker/omanju.png" alt="">
+            </div>
+            <div class="d-flex flex-column">
+              <button class="btn" @click="startSticker('omanju', 100)">100</button>
+              <button class="btn" @click="startSticker('omanju', 75)">75</button>
+              <button class="btn" @click="startSticker('omanju', 50)">50</button>
+              <button class="btn" @click="startSticker('omanju', 25)">25</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="btn" @click="reset">リセット</button>
       <div class="remote">
         <div class="center">リモート<br>コントロールにする</div>
         <div class="center">
@@ -51,9 +81,11 @@ export default {
         runner: null
       },
       showMenu: true,
-      isAnimation: false,
+      animationFlug: false,
+      stickerFlug: false,
       sticker: {
         taiyaki: false,
+        omanju: false,
       }
     }
   },
@@ -94,19 +126,19 @@ export default {
     },
     receivePeer() {
       const peers = this.peers
-      const taiyaki100 = this.taiyaki100
-      const resetCount = this.resetCount
+      const startSticker = this.startSticker
+      const reset = this.reset
 
       this.$peer.on('connection', function(conn) {
         conn.on('data', function(data){
-          if(data == "connect") {
+          if(data.action == "connect") {
             peers()
           }
-          if(data == "taiyaki100") {
-            taiyaki100()
+          if(data.action == "sticker") {
+            startSticker(data.option.sticker, data.option.percentage)
           }
-          if(data == "reset") {
-            resetCount()
+          if(data.action == "reset") {
+            reset()
           }
         });
       })
@@ -116,52 +148,70 @@ export default {
         this.$store.state.connectPeerId.push(key);
       }
     },
-    taiyaki100() {
-      if(!this.isAnimation) {
+    startSticker(sticker, percentage) {
+      if(!this.animationFlug && !this.stickerFlug) {
+        this.reset()
         this.playAudio()
-        this.dropTaiyakiPercentage(1)
+        this.showStickerPercentage(sticker, percentage)
 
         var showSticker = this.showSticker
-        setTimeout(function(){
-          showSticker('taiyaki')
+        var setStickerFlag = this.setStickerFlag
+        var getStickerFlag = this.getStickerFlag
+        this.setStickerFlag(true)
+        var timeout = setTimeout(function(){
+          if(!getStickerFlag()) {
+            clearTimeout(timeout)
+            return
+          }
+          showSticker(sticker)
+          setStickerFlag(false)
         }, 3000)
       }
     },
-    dropTaiyakiPercentage(percentage) {
-      var len = Math.floor(150*percentage)
+    showStickerPercentage(sticker, percentage) {
+      var len = Math.floor(150*(percentage/100))
       var n = 0
       var during = 1000
-      var addTaiyaki = this.addTaiyaki
-      var setIsAnimation = this.setIsAnimation
-      var getIsAnimation = this.getIsAnimation
-      this.setIsAnimation(true)
+      var addObject = this.addObject
+      var setAnimationFlag = this.setAnimationFlag
+      var getAnimationFlag = this.getAnimationFlag
+      this.setAnimationFlag(true)
       var interval = setInterval(function() {
-        if(!getIsAnimation()) {
+        if(!getAnimationFlag()) {
           clearInterval(interval)
           return
         }
         console.log(n)
-        addTaiyaki()
+        addObject(sticker)
         n++
         if(n == len) {
           clearInterval(interval)
-          setIsAnimation(false)
+          setAnimationFlag(false)
         }
       }, during/len)
     },
     showSticker(sticker) {
       this.sticker[sticker] = true
     },
-    getIsAnimation() {
-      return this.isAnimation
+    getAnimationFlag() {
+      return this.animationFlug
     },
-    setIsAnimation(val) {
-      this.isAnimation = val
+    setAnimationFlag(val) {
+      this.animationFlug = val
     },
-    resetCount() {
-      this.setIsAnimation(false)
+    getStickerFlag() {
+      return this.stickerFlug
+    },
+    setStickerFlag(val) {
+      this.stickerFlug = val
+    },
+    reset() {
+      this.setAnimationFlag(false)
+      this.setStickerFlag(false)
       this.clearWorld()
-      this.sticker.taiyaki = false
+      for (let [key] of Object.entries(this.sticker)) {
+        this.sticker[key] = false
+      }
     },
     initWorld() {
       // create engine
@@ -209,10 +259,9 @@ export default {
         kabeLeft
       ]);
     },
-    addTaiyaki() {
+    addObject(sticker) {
       var range = getRandomInt(-100, 100)
-
-      var taiyaki = Bodies.circle(this.canvas.width/2+range, -100, 40, {
+      var object = Bodies.circle(this.canvas.width/2+range, -100, 40, {
         density: 10, // 密度
         frictionAir: 0, // 空気抵抗
         restitution: 0.5, // 弾力性
@@ -220,13 +269,13 @@ export default {
         render: {
           lineWidth: 5,  //線の太さ
           sprite: { //スプライトの設定
-            texture: './img/character_taiyaki.png' //テクスチャ画像を指定
+            texture: './img/sticker/'+sticker+'.png' //テクスチャ画像を指定
           }
         }
       });
 
       World.add(this.mattetr.world, [  //作成した図形をステージに追加して描画する？
-          taiyaki
+          object
       ]);
 
       function getRandomInt(min, max) {
@@ -283,9 +332,8 @@ body {
     align-items: center;
     flex-direction: column;
     .btn {
-      margin-top: 10px;
+      margin: 10px;
       width: 200px;
-      height: 100px;
       font-size: 2em;
       background: #ffffff;
       box-shadow:2px 2px 9px -2px #969696;

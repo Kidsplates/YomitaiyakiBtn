@@ -8,7 +8,34 @@
           <div class="status"><span v-if="success">成功</span><span v-if="!success">未接続</span></div>
         </div>
       </div>
-      <button class="btn" @click="taiyaki100">よみたい焼き</button>
+      <div class="row mt-3">
+        <div class="col">
+          <div class="border border-dark rounded py-2">
+            <div class="text-center">
+              <img width="50px" src="@/assets/sticker/taiyaki.png" alt="">
+            </div>
+            <div class="d-flex flex-column">
+              <button class="btn" @click="startSticker('taiyaki', 100)">100</button>
+              <button class="btn" @click="startSticker('taiyaki', 75)">75</button>
+              <button class="btn" @click="startSticker('taiyaki', 50)">50</button>
+              <button class="btn" @click="startSticker('taiyaki', 25)">25</button>
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="border border-dark rounded py-2">
+            <div class="text-center">
+              <img width="50px" src="@/assets/sticker/omanju.png" alt="">
+            </div>
+            <div class="d-flex flex-column">
+              <button class="btn" @click="startSticker('omanju', 100)">100</button>
+              <button class="btn" @click="startSticker('omanju', 75)">75</button>
+              <button class="btn" @click="startSticker('omanju', 50)">50</button>
+              <button class="btn" @click="startSticker('omanju', 25)">25</button>
+            </div>
+          </div>
+        </div>
+      </div>
       <button class="btn" @click="resetCount">リセット</button>
     </div>
   </div>
@@ -45,7 +72,6 @@ export default {
       const conn = this.$peer.connect(id)
       const successConnection = this.successConnection
       conn.on('open', function() {
-        conn.send('connect');
         successConnection()
       })
     },
@@ -58,18 +84,26 @@ export default {
         this.$store.state.connectPeerId.push(key);
       }
     },
-    taiyaki100() {
+    startSticker(sticker, percentage) {
       const id = this.connectPeerId[0]
       const conn = this.$peer.connect(id)
       conn.on('open', function() {
-        conn.send('taiyaki100');
+        conn.send({
+          action: 'sticker',
+          option: {
+            sticker: sticker,
+            percentage: percentage,
+          }
+        });
       })
     },
     resetCount() {
       const id = this.connectPeerId[0]
       const conn = this.$peer.connect(id)
       conn.on('open', function() {
-        conn.send('reset');
+        conn.send({
+          action: 'reset'
+        });
       })
     },
   },
@@ -90,9 +124,8 @@ body {
     align-items: center;
     flex-direction: column;
     .btn {
-      margin-top: 10px;
+      margin: 10px;
       width: 200px;
-      height: 100px;
       font-size: 2em;
       background: #ffffff;
       box-shadow:2px 2px 9px -2px #969696;
