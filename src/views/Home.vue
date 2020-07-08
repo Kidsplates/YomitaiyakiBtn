@@ -46,12 +46,14 @@
         </div>
       </div>
       <button class="reset btn" @click="reset">リセット</button>
-      <div class="remote">
-        <div class="center">リモート<br>コントロールにする</div>
-        <div class="center">
-          <button class="remote-btn" @click="generateControlUrl">リモコンページを<br>生成する</button>
+      <div class="center remote">
+        <div class="border-bottom pb-2 mb-2">リモート<br>コントロールにする</div>
+        <div v-if="urlControlPage">
           <a :href="urlControlPage" target="_blank">{{ urlControlPage }}</a>
-          <img id="qrControlPage" src="" alt="">
+          <img :src="qrControlPage" alt="">
+        </div>
+        <div class="center" v-else>
+          <small>peer to peer サーバー<br>に接続中…</small>
         </div>
       </div>
       <br>
@@ -71,6 +73,7 @@ export default {
     return {
       point: 0,
       urlControlPage: '',
+      qrControlPage: '',
       canvas: {
         width: 1280,
         height: 720,
@@ -103,6 +106,13 @@ export default {
   mounted() {
     this.initWorld()
     this.initEventListener()
+
+    const generateControlUrl = this.generateControlUrl
+    const receivePeer = this.receivePeer
+    this.$peer.on('open', function() {
+      generateControlUrl()
+      receivePeer()
+    })
   },
   methods: {
     reload(){
@@ -119,11 +129,15 @@ export default {
     generateControlUrl() {
       this.$store.state.myPeerId = this.$peer.id
       const url = location.href+'control/'+this.myPeerId
+      const setQrControlPage = this.setQrControlPage
+
       this.urlControlPage = url
-      QRCode.toDataURL(url, function (err, url) {
-        document.getElementById('qrControlPage').src = url
+      QRCode.toDataURL(url, function (err, data) {
+        setQrControlPage(data)
       })
-      this.receivePeer()
+    },
+    setQrControlPage(data) {
+      this.qrControlPage = data
     },
     receivePeer() {
       const peers = this.peers
